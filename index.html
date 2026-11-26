@@ -11,14 +11,21 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>Frogger</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/boss-arena.css">
+    <link rel="stylesheet" href="css/start-screen.css">
 </head>
 <body>
+    <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+        <filter id="gbPalette4">
+            <feColorMatrix type="saturate" values="0" result="gray" />
+            <feComponentTransfer in="gray">
+                <feFuncR type="discrete" tableValues="0.05 0.13 0.23 0.34" />
+                <feFuncG type="discrete" tableValues="0.15 0.34 0.55 0.78" />
+                <feFuncB type="discrete" tableValues="0.08 0.18 0.29 0.43" />
+            </feComponentTransfer>
+        </filter>
+    </svg>
     <div id="container">
-        <header>
-            <h1>Frogger Game</h1>
-            <!--<img src="images/frog.jpg" alt="Frog Image" width="212px" height="141px">-->
-            <p>This game is representation of the classic frogger game. Everytime you reach the top, you collect a star. You score after collectiong five starts. You start with 3 lives: every collision with an enemy costs one life and one star. Lose all lives and it's game over; reach a score of 5 and you win. Use the button on the bottom to select your character. Every level adds more enemies, and new enemy types appear as you level up. Step on the treasure chests that appear on the road to open a loot box and win a random reward, including extra lives (up to 6 hearts)! If you die, your level goes back to 1. </p>
-        </header>
         <div id="game"></div>
         <div id="controls">
             <div id="profileName" class="profile-name" onclick="profile.open();" title="Player profile"></div>
@@ -27,10 +34,13 @@
                 <div id="xpBar"><div id="xpFill"></div></div>
                 <span id="xpText">0 / 24 XP</span>
             </div>
+            <div id="bossHint"></div>
             <button type="button" id="changePlayer" onclick="selectPlayer();">Change Player</button>
             <div id='score'>Score 0</div>
             <div id='lives'></div>
             <div id='coins'>Coins 0</div>
+            <div id='gems'>Gems 0</div>
+            <div id='ticketsHud'>Tickets 0</div>
             <div class="menu-buttons">
                 <button type="button" id="openMenu" onclick="gameMenu.toggle();">☰ Menu</button>
             </div>
@@ -71,6 +81,45 @@
             <button type="button" class="dp" id="dpDown" data-dir="down" aria-label="Down"><img src="images/arrow-down.png" alt=""></button>
             <button type="button" class="dp" id="dpRight" data-dir="right" aria-label="Right"><img src="images/arrow-right.png" alt=""></button>
         </div>
+        <script>
+            // Se algum script falhar, mostra o erro na tela (toque para fechar) em vez de o jogo parecer "travado".
+            window.__errs = [];
+            // Arquivo que nao carregou (servidor local engasgado): mostra qual foi e recarrega 1 vez sozinho.
+            window.addEventListener('error', function(e) {
+                var t = e.target;
+                if (t && (t.tagName === 'SCRIPT' || t.tagName === 'IMG') && (t.src || '')) {
+                    window.__errs.push('Falhou ao carregar ' + String(t.src).split('/').slice(-2).join('/'));
+                }
+            }, true);
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    var ok = typeof player !== 'undefined' && typeof allEnemies !== 'undefined';
+                    try {
+                        if (ok) { sessionStorage.removeItem('fgRetry'); }
+                        else if (!sessionStorage.getItem('fgRetry')) { sessionStorage.setItem('fgRetry', '1'); location.reload(); }
+                    } catch (x) {}
+                }, 1200);
+            });
+            window.addEventListener('error', function(e) {
+                try {
+                    var msg = (e.message || 'error') + ' (' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '?') + ')';
+                    window.__errs.push(msg);
+                    var box = document.getElementById('errBox');
+                    if (!box) {
+                        box = document.createElement('div');
+                        box.id = 'errBox';
+                        box.style.cssText = 'position:fixed;left:6px;right:6px;top:6px;z-index:99999;background:#7a1010;color:#fff;font:12px Arial;padding:6px 8px;border:2px solid #ff8a8a;border-radius:6px;max-height:30vh;overflow:auto';
+                        box.onclick = function() { box.remove(); };
+                        document.body.appendChild(box);
+                    }
+                    box.textContent = '\u26A0 ' + window.__errs.slice(0, 3).join('  |  ') + '  (tap to close)';
+                } catch (x) {}
+            });
+        </script>
+        <script src="js/config.js"></script>
+        <script src="js/input.js"></script>
+        <script src="js/core/pool.js"></script>
+        <script src="js/core/animator.js"></script>
         <script src="js/profile.js"></script>
         <script src="js/resources.js"></script>
         <script src="js/maps.js"></script>
@@ -79,13 +128,31 @@
         <script src="js/app.js"></script>
         <script src="js/lootbox.js"></script>
         <script src="js/shop.js"></script>
+        <script src="js/gems.js"></script>
+        <script src="js/tickets.js"></script>
         <script src="js/boxes.js"></script>
+        <script src="js/start-scene.js"></script>
         <script src="js/menu.js"></script>
+        <script src="js/wardrobe.js"></script>
         <script src="js/rewards.js"></script>
+        <script src="js/curse.js"></script>
+        <script src="js/slot.js"></script>
+        <script src="js/mouse.js"></script>
         <script src="js/level.js"></script>
+        <script src="js/combo.js"></script>
+        <script src="js/pickups.js"></script>
         <script src="js/boss.js"></script>
         <script src="js/gameover.js"></script>
         <script src="js/fx.js"></script>
+        <script src="js/equalizer.js"></script>
+        <script src="js/online-music.js"></script>
+        <script src="js/sfx.js"></script>
+        <script src="js/items.js"></script>
+        <script src="js/fightfx.js"></script>
+        <script src="js/boss-arena.js"></script>
+        <script src="js/savedata.js"></script>
+        <script src="js/codes.js"></script>
+        <script src="js/gba.js"></script>
         <script>
             var SAVE_KEY = 'frogger-progress-v1';
             function saveGame() {
@@ -169,7 +236,7 @@
             });
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('sw.js').catch(function() {});
+                    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(r) { r.update(); }).catch(function() {});
                 });
             }
         </script>
